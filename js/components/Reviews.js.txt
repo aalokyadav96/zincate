@@ -1,0 +1,659 @@
+import { createElement } from "./createElement.js";
+import { apiFetch } from "../api/api.js";
+import ReviewItem from './ui/ReviewItem.mjs';
+import Button from "../components/base/Button.js";
+
+async function displayReviews(content, entityType, entityId) {
+    const API_BASE = '/reviews';
+    const REVIEWS_ENDPOINT = `${API_BASE}/${entityType}/${entityId}`;
+
+    // Fetch reviews from the server
+    async function fetchReviews() {
+        try {
+            const response = await apiFetch(REVIEWS_ENDPOINT);
+            if (response.ok) {
+                return response;
+            }
+            console.error('Failed to fetch reviews:', response.statusText);
+            return [];
+        } catch (error) {
+            console.error('Error fetching reviews:', error);
+            return [];
+        }
+    }
+
+    // Render reviews
+    async function renderReviews(content) {
+        content.innerHTML = ''; // Clear the container
+
+        const reviews = await fetchReviews();
+        if (!reviews || reviews.message.length === 0) {
+            content.appendChild(createElement('p', {}, ['No reviews available.']));
+
+            const addReviewButton = Button('Add Review', 'add-review-btn', {
+                click: () => showReviewForm(),
+            });
+            content.appendChild(addReviewButton);
+            return;
+        }
+
+        reviews.forEach((review) => {
+            const reviewElement = createReviewItem(review);
+            content.appendChild(reviewElement);
+        });
+
+        // Add a button for new review
+        const addReviewButton = Button('Add Review', 'add-review-btn', {
+            click: () => showReviewForm(),
+        });
+        content.appendChild(addReviewButton);
+    }
+
+    // Create review item
+    function createReviewItem(review) {
+        return createElement('div', { class: 'review-item', id: `review-${review.id}` }, [
+            ReviewItem(review), // Use your UI component
+            createElement('div', { class: 'review-actions' }, [
+                Button('Edit', 'edit-btn', { click: () => showReviewForm(review) }),
+                Button('Delete', 'delete-btn', { click: () => deleteReview(review.id) }),
+            ]),
+        ]);
+    }
+
+    // Show the review form
+    function showReviewForm(review = null) {
+        content.innerHTML = ''; // Clear content for the form
+
+        const initialData = review || { reviewerName: '', rating: '', comment: '' };
+
+        const form = createReviewForm({
+            initialData,
+            onSubmit: async (reviewData) => {
+                const endpoint = review
+                    ? `${REVIEWS_ENDPOINT}/${review.id}`
+                    : REVIEWS_ENDPOINT;
+
+                const method = review ? 'PUT' : 'POST';
+
+                const response = await apiFetch(endpoint, method, JSON.stringify(reviewData));
+
+                if (response.ok) {
+                    await renderReviews(content);
+                } else {
+                    alert('Failed to save review.');
+                }
+            },
+        });
+
+        content.appendChild(form);
+    }
+
+    // Create the review form
+    function createReviewForm({ initialData, onSubmit }) {
+        const { reviewerName, rating, comment } = initialData;
+
+        const nameInput = createElement('input', {
+            type: 'text',
+            placeholder: 'Your Name',
+            value: reviewerName,
+        });
+        const ratingInput = createElement('input', {
+            type: 'number',
+            min: 1,
+            max: 5,
+            placeholder: 'Rating (1-5)',
+            value: rating,
+        });
+        const commentInput = createElement('textarea', {
+            placeholder: 'Your Review',
+        }, [comment]);
+
+        const submitButton = Button('Submit', 'submit-btn', {
+            click: () => {
+                const reviewData = {
+                    reviewerName: nameInput.value,
+                    rating: parseInt(ratingInput.value, 10),
+                    comment: commentInput.value,
+                };
+
+                if (!reviewData.reviewerName || !reviewData.rating || !reviewData.comment) {
+                    alert('All fields are required.');
+                    return;
+                }
+
+                onSubmit(reviewData);
+            },
+        });
+
+        const cancelButton = Button('Cancel', 'cancel-btn', {
+            click: () => renderReviews(content),
+        });
+
+        return createElement('form', { class: 'review-form' }, [
+            createElement('label', {}, ['Name: ', nameInput]),
+            createElement('label', {}, ['Rating: ', ratingInput]),
+            createElement('label', {}, ['Review: ', commentInput]),
+            createElement('div', { class: 'form-actions' }, [submitButton, cancelButton]),
+        ]);
+    }
+
+    // Delete a review
+    async function deleteReview(reviewId) {
+        try {
+            const response = await apiFetch(`${REVIEWS_ENDPOINT}/${reviewId}`, 'DELETE');
+            if (response.ok) {
+                await renderReviews(content);
+            } else {
+                alert('Failed to delete review.');
+            }
+        } catch (error) {
+            console.error('Error deleting review:', error);
+        }
+    }
+
+    // Initial render
+    renderReviews(content);
+}
+
+export { displayReviews };
+
+// import { createElement } from "./createElement.js";
+// import { apiFetch } from "../api/api.js";
+// import ReviewItem from './ui/ReviewItem.mjs';
+// import Button from "../components/base/Button.js";
+
+
+// async function displayReviews(content, entityType, entityId) {
+//     const API_BASE = '/reviews';
+//     const REVIEWS_ENDPOINT = `${API_BASE}/${entityType}/${entityId}`;
+
+//     // Fetch reviews from the server
+//     async function fetchReviews() {
+//         try {
+//             const response = await apiFetch(REVIEWS_ENDPOINT);
+//             if (response.ok) {
+//                 return response;
+//             }
+//             console.error('Failed to fetch reviews:', response.statusText);
+//             return [];
+//         } catch (error) {
+//             console.error('Error fetching reviews:', error);
+//             return [];
+//         }
+//     }
+
+//     // Render reviews
+//     async function renderReviews() {
+//         content.innerHTML = ''; // Clear the container
+
+//         const reviews = await fetchReviews();
+//         if (!reviews || reviews.message.length === 0) {
+//             content.appendChild(createElement('p', {}, ['No reviews available.']));
+
+//             const addReviewButton = Button('Add Review', 'add-review-btn', {
+//                 click: () => showReviewForm(),
+//             });
+//             content.appendChild(addReviewButton);
+//             return;
+//         }
+
+//         reviews.forEach((review) => {
+//             const reviewElement = createReviewItem(review);
+//             content.appendChild(reviewElement);
+//             content.appendChild(ReviewItem(review));
+//         });
+
+//         // Add a button for new review
+//         const addReviewButton = Button('Add Review', 'add-review-btn', {
+//             click: () => showReviewForm(),
+//         });
+//         content.appendChild(addReviewButton);
+//     }
+
+//     // Create review item
+//     function createReviewItem(review) {
+//         return createElement('div', { class: 'review-item', id: `review-${review.id}` }, [
+//             ReviewItem(review), // Use your UI component
+//             createElement('div', { class: 'review-actions' }, [
+//                 Button('Edit', 'edit-btn', { click: () => showReviewForm(review) }),
+//                 Button('Delete', 'delete-btn', { click: () => deleteReview(review.id) }),
+//             ]),
+//         ]);
+//     }
+
+//     // Show the review form
+//     function showReviewForm(review = null) {
+//         content.innerHTML = ''; // Clear content for the form
+
+//         const initialData = review || { reviewerName: '', rating: '', comment: '' };
+
+//         const form = createReviewForm({
+//             initialData,
+//             onSubmit: async (reviewData) => {
+//                 const endpoint = review
+//                     ? `${REVIEWS_ENDPOINT}/${review.id}`
+//                     : REVIEWS_ENDPOINT;
+
+//                 const method = review ? 'PUT' : 'POST';
+
+//                 const response = await apiFetch(endpoint, method, {
+//                     'Content-Type': 'application/json',
+//                 }, JSON.stringify(reviewData));
+
+//                 if (response.ok) {
+//                     await renderReviews();
+//                 } else {
+//                     alert('Failed to save review.');
+//                 }
+//             },
+//         });
+
+//         content.appendChild(form);
+//     }
+
+//     // Create the review form
+//     function createReviewForm({ initialData, onSubmit }) {
+//         const { reviewerName, rating, comment } = initialData;
+
+//         const nameInput = createElement('input', {
+//             type: 'text',
+//             placeholder: 'Your Name',
+//             value: reviewerName,
+//         });
+//         const ratingInput = createElement('input', {
+//             type: 'number',
+//             min: 1,
+//             max: 5,
+//             placeholder: 'Rating (1-5)',
+//             value: rating,
+//         });
+//         const commentInput = createElement('textarea', {
+//             placeholder: 'Your Review',
+//         }, [comment]);
+
+//         const submitButton = Button('Submit', 'submit-btn', {
+//             click: () => {
+//                 const reviewData = {
+//                     reviewerName: nameInput.value,
+//                     rating: parseInt(ratingInput.value, 10),
+//                     comment: commentInput.value,
+//                 };
+
+//                 if (!reviewData.reviewerName || !reviewData.rating || !reviewData.comment) {
+//                     alert('All fields are required.');
+//                     return;
+//                 }
+
+//                 onSubmit(reviewData);
+//             },
+//         });
+
+//         const cancelButton = Button('Cancel', 'cancel-btn', {
+//             click: () => renderReviews(),
+//         });
+
+//         return createElement('form', { class: 'review-form' }, [
+//             createElement('label', {}, ['Name: ', nameInput]),
+//             createElement('label', {}, ['Rating: ', ratingInput]),
+//             createElement('label', {}, ['Review: ', commentInput]),
+//             createElement('div', { class: 'form-actions' }, [submitButton, cancelButton]),
+//         ]);
+//     }
+
+//     // Delete a review
+//     async function deleteReview(reviewId) {
+//         try {
+//             const response = await apiFetch(`${REVIEWS_ENDPOINT}/${reviewId}`, 'DELETE');
+//             if (response.ok) {
+//                 await renderReviews();
+//             } else {
+//                 alert('Failed to delete review.');
+//             }
+//         } catch (error) {
+//             console.error('Error deleting review:', error);
+//         }
+//     }
+
+//     // Initial render
+//     renderReviews();
+// }
+
+// export { displayReviews };
+
+
+// // // Function to dynamically create HTML content
+// // function createElement(tag, attributes = {}, children = []) {
+// //     const element = document.createElement(tag);
+// //     Object.entries(attributes).forEach(([key, value]) => {
+// //         if (key.startsWith('on') && typeof value === 'function') {
+// //             element.addEventListener(key.slice(2).toLowerCase(), value);
+// //         } else {
+// //             element.setAttribute(key, value);
+// //         }
+// //     });
+// //     children.forEach(child => {
+// //         if (typeof child === 'string') {
+// //             element.appendChild(document.createTextNode(child));
+// //         } else {
+// //             element.appendChild(child);
+// //         }
+// //     });
+// //     return element;
+// // }
+
+// // async function displayReviews(content, entityType, entityId) {
+// //     const timeline = content;
+// //     const API_BASE = '/reviews';
+// //     const REVIEWS_ENDPOINT = `${API_BASE}/${entityType}/${entityId}`;
+
+// //     // Function to fetch reviews from the server
+// //     async function fetchReviews() {
+// //         const response = await apiFetch(`${REVIEWS_ENDPOINT}`);
+// //         if (response.ok) {
+// //             return response;
+// //         }
+// //         console.error('Failed to fetch reviews:', response.statusText);
+// //         return [];
+// //     }
+
+// //     // Function to render reviews
+// //     async function renderReviews() {
+// //         timeline.innerHTML = ''; // Clear existing reviews
+
+// //         const reviews = await fetchReviews();
+// //         if (reviews.message.length === 0) {
+// //             timeline.appendChild(createElement('p', {}, ['No reviews available.']));
+
+// //             const addReviewButton = Button("Add Review", "add-notice-btn", { click: addReview }); // Updated line
+// //             timeline.appendChild(addReviewButton);
+// //             return;
+// //         }
+// //         reviews.forEach((review) => {
+// //             const reviewElement = createReviewItem(review);
+// //             timeline.appendChild(reviewElement);
+// //         });
+
+// //     }
+
+// //     // Create individual review item
+// //     function createReviewItem(review) {
+// //         return createElement('div', { class: 'review-item', id: `review-${review.id}` }, [
+// //             ReviewItem(review), // Render the review using your existing component
+// //             createElement('button', { onClick: () => editReview(review.id) }, ['Edit']),
+// //             createElement('button', { onClick: () => deleteReview(review.id) }, ['Delete']),
+// //         ]);
+// //     }
+
+// //     // Add a new review
+// //     async function addReview(content) {
+// //         if (!content || typeof content.appendChild !== 'function') {
+// //             console.error('Invalid content container:', content);
+// //             return;
+// //         }
+    
+// //         content.innerHTML = ''; // Clear existing content
+    
+// //         const form = createReviewForm({
+// //             onSubmit: async (reviewData) => {
+// //                 const response = await apiFetch(`${REVIEWS_ENDPOINT}`, 'POST', { 'Content-Type': 'application/json' }, JSON.stringify(reviewData));
+    
+// //                 if (response.ok) {
+// //                     await renderReviews();
+// //                 } else {
+// //                     alert('Failed to add review');
+// //                 }
+// //             },
+// //         });
+    
+// //         content.appendChild(form);
+// //     }
+    
+
+// //     // Edit an existing review
+// //     async function editReview(reviewId, timeline) {
+// //         timeline.innerHTML = ''; // Clear existing content
+
+// //         const review = await apiFetch(`${REVIEWS_ENDPOINT}/${reviewId}`).then((res) => (res.ok ? res.json() : null));
+
+// //         if (!review) {
+// //             alert('Failed to fetch review for editing.');
+// //             return;
+// //         }
+
+// //         const form = createReviewForm({
+// //             initialData: review,
+// //             onSubmit: async (reviewData) => {
+// //                 const response = await apiFetch(`${REVIEWS_ENDPOINT}/${reviewId}`, 'PUT', { 'Content-Type': 'application/json' }, JSON.stringify(reviewData));
+
+// //                 if (response.ok) {
+// //                     await renderReviews();
+// //                 } else {
+// //                     alert('Failed to update review');
+// //                 }
+// //             },
+// //         });
+
+// //         timeline.appendChild(form);
+// //     }
+
+// //     // Helper to create the review form
+// //     function createReviewForm({ initialData = {}, onSubmit }) {
+// //         const { reviewerName = '', rating = '', comment = '' } = initialData;
+
+// //         const nameInput = createElement('input', { type: 'text', placeholder: 'Your Name', value: reviewerName });
+// //         const ratingInput = createElement('input', { type: 'number', min: 1, max: 5, placeholder: 'Rating (1-5)', value: rating });
+// //         const commentInput = createElement('textarea', { placeholder: 'Your Review' }, [comment]);
+
+// //         const submitButton = Button('Submit', 'submit-btn', {
+// //             click: () => {
+// //                 const reviewData = {
+// //                     reviewerName: nameInput.value,
+// //                     rating: parseInt(ratingInput.value, 10),
+// //                     comment: commentInput.value,
+// //                 };
+
+// //                 if (!reviewData.reviewerName || !reviewData.rating || !reviewData.comment) {
+// //                     alert('All fields are required.');
+// //                     return;
+// //                 }
+
+// //                 onSubmit(reviewData);
+// //             },
+// //         });
+
+// //         const cancelButton = Button('Cancel', 'cancel-btn', {
+// //             click: () => {
+// //                 content.innerHTML = ''; // Clear form
+// //                 renderReviews(); // Reload reviews
+// //             },
+// //         });
+
+// //         return createElement('form', { class: 'review-form' }, [
+// //             createElement('label', {}, ['Name: ', nameInput]),
+// //             createElement('label', {}, ['Rating: ', ratingInput]),
+// //             createElement('label', {}, ['Review: ', commentInput]),
+// //             createElement('div', { class: 'form-actions' }, [submitButton, cancelButton]),
+// //         ]);
+// //     }
+
+// //     // // Add a new review
+// //     // async function addReview(content) {
+// //     //     content.innerHTML = '';
+// //     //     const reviewerName = prompt('Enter your name:', '');
+// //     //     const rating = parseInt(prompt('Enter your rating (1-5):', ''), 10);
+// //     //     const comment = prompt('Enter your review:', '');
+
+// //     //     if (reviewerName && rating && comment) {
+// //     //         const newReview = { reviewerName, rating, comment };
+
+// //     //         const response = await apiFetch(`${REVIEWS_ENDPOINT}`, 'POST', { 'Content-Type': 'application/json' }, JSON.stringify(newReview),);
+
+// //     //         if (response.ok) {
+// //     //             await renderReviews();
+// //     //         } else {
+// //     //             alert('Failed to add review');
+// //     //         }
+// //     //     } else {
+// //     //         alert('All fields are required to add a review.');
+// //     //     }
+// //     // }
+
+// //     // // Edit an existing review
+// //     // async function editReview(reviewId, content) {
+// //     //     const review = await apiFetch(`${REVIEWS_ENDPOINT}/${reviewId}`).then((res) =>
+// //     //         res.ok ? res.json() : null
+// //     //     );
+// //     //     if (!review) {
+// //     //         alert('Failed to fetch review for editing.');
+// //     //         return;
+// //     //     }
+
+// //     //     const updatedReviewerName = prompt('Edit your name:', review.reviewerName);
+// //     //     const updatedRating = parseInt(prompt('Edit your rating (1-5):', review.rating), 10);
+// //     //     const updatedComment = prompt('Edit your review:', review.comment);
+
+// //     //     if (updatedReviewerName && updatedRating && updatedComment) {
+// //     //         const updatedReview = {
+// //     //             reviewerName: updatedReviewerName,
+// //     //             rating: updatedRating,
+// //     //             comment: updatedComment,
+// //     //         };
+
+// //     //         const response = await apiFetch(`${REVIEWS_ENDPOINT}/${reviewId}`, 'PUT', { 'Content-Type': 'application/json' }, JSON.stringify(updatedReview),);
+
+// //     //         if (response.ok) {
+// //     //             await renderReviews();
+// //     //         } else {
+// //     //             alert('Failed to update review');
+// //     //         }
+// //     //     } else {
+// //     //         alert('All fields are required to edit a review.');
+// //     //     }
+// //     // }
+
+// //     // Delete a review
+// //     async function deleteReview(reviewId) {
+// //         const response = await apiFetch(`${REVIEWS_ENDPOINT}/${reviewId}`, 'DELETE',);
+
+// //         if (response.ok) {
+// //             await renderReviews();
+// //         } else {
+// //             alert('Failed to delete review');
+// //         }
+// //     }
+
+// //     // Initial render
+// //     renderReviews();
+// // }
+
+// // export { displayReviews };
+
+
+// // import ReviewItem from '../../components/ui/ReviewItem.mjs';
+// // import { createElement } from "../../components/createElement.js";
+
+// // async function displayPlaceReviews(content) {
+// //     const timeline = content;
+
+// //     let reviews = [
+// //         { id: 1, reviewerName: 'Alice', rating: 5, comment: 'Excellent place!' },
+// //         { id: 2, reviewerName: 'Bob', rating: 4, comment: 'Great experience.' },
+// //         { id: 3, reviewerName: 'Charlie', rating: 3, comment: 'It was okay.' },
+// //     ];
+
+// //     // Function to render reviews
+// //     function renderReviews() {
+// //         timeline.innerHTML = ''; // Clear existing reviews
+
+// //         if (reviews.length === 0) {
+// //             timeline.appendChild(createElement('p', {}, ['No reviews available.']));
+// //             return;
+// //         }
+
+// //         reviews.forEach((review) => {
+// //             const reviewElement = createReviewItem(review);
+// //             timeline.appendChild(reviewElement);
+// //         });
+
+// //         // Add "Add Review" button
+// //         timeline.appendChild(
+// //             createElement('button', { onClick: addReview }, ['Add Review'])
+// //         );
+// //     }
+
+// //     // Create individual review item
+// //     function createReviewItem(review) {
+// //         return createElement('div', { class: 'review-item', id: `review-${review.id}` }, [
+// //             ReviewItem(review), // Render the review using your existing component
+// //             createElement('button', { onClick: () => editReview(review.id) }, ['Edit']),
+// //             createElement('button', { onClick: () => deleteReview(review.id) }, ['Delete']),
+// //         ]);
+// //     }
+
+// //     // Add a new review
+// //     function addReview() {
+// //         const newReview = {
+// //             id: Date.now(), // Unique ID
+// //             reviewerName: prompt('Enter your name:', ''),
+// //             rating: parseInt(prompt('Enter your rating (1-5):', ''), 10),
+// //             comment: prompt('Enter your review:', ''),
+// //         };
+
+// //         if (newReview.reviewerName && newReview.rating && newReview.comment) {
+// //             reviews.push(newReview);
+// //             renderReviews();
+// //         } else {
+// //             alert('All fields are required to add a review.');
+// //         }
+// //     }
+
+// //     // Edit an existing review
+// //     function editReview(reviewId) {
+// //         const review = reviews.find((r) => r.id === reviewId);
+// //         if (!review) return;
+
+// //         const updatedReviewerName = prompt('Edit your name:', review.reviewerName);
+// //         const updatedRating = parseInt(prompt('Edit your rating (1-5):', review.rating), 10);
+// //         const updatedComment = prompt('Edit your review:', review.comment);
+
+// //         if (updatedReviewerName && updatedRating && updatedComment) {
+// //             review.reviewerName = updatedReviewerName;
+// //             review.rating = updatedRating;
+// //             review.comment = updatedComment;
+// //             renderReviews();
+// //         } else {
+// //             alert('All fields are required to edit a review.');
+// //         }
+// //     }
+
+// //     // Delete a review
+// //     function deleteReview(reviewId) {
+// //         reviews = reviews.filter((review) => review.id !== reviewId);
+// //         renderReviews();
+// //     }
+
+// //     // Initial render
+// //     renderReviews();
+// // }
+
+// // export { displayPlaceReviews };
+
+// // // import ReviewItem from '../../components/ui/ReviewItem.mjs';
+
+// // // async function displayPlaceReviews(content) {
+// // //     const timeline = content;
+
+// // //     // createElement("p", {}, ["No reviews available."])
+
+// // //     const reviews = [
+// // //         { reviewerName: 'Alice', rating: 5, comment: 'Excellent place!' },
+// // //         { reviewerName: 'Bob', rating: 4, comment: 'Great experience.' },
+// // //         { reviewerName: 'Charlie', rating: 3, comment: 'It was okay.' },
+// // //     ];
+
+// // //     reviews.forEach((review) => {
+// // //         timeline.appendChild(ReviewItem(review));
+// // //     });
+// // // }
+
+// // // export { displayPlaceReviews };

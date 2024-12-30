@@ -1,0 +1,202 @@
+
+/* Main content styling */
+/* main#content {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+   */
+  main#content h1 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  /* main#content img {
+    display: block;
+    margin: 10px auto 20px auto;
+    border-radius: 5px;
+  } */
+  
+  main#content p {
+    margin: 10px 0;
+    line-height: 1.5;
+  }
+  
+  main#content p strong {
+    color: #555;
+  }
+  
+  /* Buttons */
+  /* button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+    transition: background 0.3s ease;
+  } */
+  
+  /* button:hover {
+    background: #0056b3;
+  }
+  
+  button:active {
+    transform: scale(0.98);
+  } */
+  
+  /* Responsive adjustments */
+  @media (max-width: 600px) {
+    main#content {
+      padding: 15px;
+    }
+  
+    button {
+      width: 100%;
+      margin: 5px 0;
+    }
+  }
+
+  /*******************************/
+
+  
+#tabs-container {
+  margin-top: 20px;
+  border-top: 2px solid #ddd;
+}
+
+#tabs-header {
+  list-style: none;
+  display: flex;
+  justify-content: space-evenly;
+  padding: 0;
+  margin: 0;
+  background: #f4f4f4;
+  border-bottom: 2px solid #ddd;
+}
+
+#tabs-header .tab {
+  flex-grow: 1;
+  text-align: center;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #555;
+  border-right: 1px solid #ddd;
+  transition: background 0.3s, color 0.3s;
+}
+
+#tabs-header .tab:last-child {
+  border-right: none;
+}
+
+#tabs-header .tab:hover {
+  background: #ddd;
+  color: #333;
+}
+
+#tabs-header .tab.active {
+  background: #fff;
+  color: #000;
+  font-weight: bold;
+  border-bottom: 2px solid #007bff;
+}
+
+/* Tab content styles */
+#tabs-content {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+}
+
+.tabcontent.active {
+  display: block; /* Show the active tab content */
+}
+
+/* Banner styles */
+#place-banner {
+  /* margin: 20px 0; */
+  text-align: center;
+}
+
+#place-banner img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+/* Place details */
+#place-details {
+  /* margin: 20px 0; */
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  flex: 2;
+}
+
+#place-details h3 {
+  margin: 0;
+  color: #007bff;
+}
+
+#place-details p {
+  margin: 5px 0;
+}
+
+/* Booking form */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+form label {
+  font-weight: bold;
+}
+
+form input, form select, form button {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+form button {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+form button:hover {
+  background: #0056b3;
+}
+
+/* Gallery */
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gallery img {
+  width: calc(33.33% - 10px);
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  object-fit: cover;
+}
